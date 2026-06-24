@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Atlas - Verified Place Registry</title>
+<meta name="description" content="Atlas is a GenLayer geospatial verification protocol. Drop a sourced place pin, run validator review, and keep a public audit trail for verified coordinates." />
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="./styles.css?v=1">
+</head>
+<body>
+
+<div id="map"></div>
+
+<!-- floating top bar -->
+<header class="topbar">
+  <div class="brand-panel">
+    <span class="brand"><i class="ph-fill ph-globe-hemisphere-west"></i> Atlas</span>
+    <span class="brand-sub" id="countLine">— pins</span>
+  </div>
+  <div class="controls">
+    <span id="walletslot"><button class="gbtn" id="connectBtn"><i class="ph-bold ph-wallet"></i> Connect</button></span>
+    <button class="gbtn accent" id="dropBtn"><i class="ph-bold ph-map-pin-plus"></i> Drop a pin</button>
+  </div>
+</header>
+
+<!-- pin-drop hint -->
+<div class="drophint" id="dropHint"><i class="ph-bold ph-cursor-click"></i> Click anywhere on the map to place your pin <button id="cancelDrop">cancel</button></div>
+
+<!-- legend -->
+<div class="legend">
+  <span class="lg"><i class="dot verified"></i> Verified</span>
+  <span class="lg"><i class="dot pending"></i> Awaiting proof</span>
+  <span class="lg"><i class="dot rejected"></i> Rejected</span>
+</div>
+
+<!-- detail panel -->
+<aside class="panel" id="panel" aria-hidden="true">
+  <button class="panel-x" id="panelX"><i class="ph-bold ph-x"></i></button>
+  <div id="panelBody"></div>
+</aside>
+
+<!-- add-place panel (left) -->
+<aside class="addpanel" id="addPanel" aria-hidden="true">
+  <div class="add-h"><span>New pin</span><button class="panel-x" id="addX"><i class="ph-bold ph-x"></i></button></div>
+  <div class="coord-readout" id="coordReadout"><i class="ph-bold ph-crosshair"></i> <span>no location yet</span></div>
+  <label class="fl">Name</label><input id="aName" maxlength="80" placeholder="e.g. Sagrada Familia" />
+  <label class="fl">What is it?</label><textarea id="aDesc" placeholder="A short description the validators will check."></textarea>
+  <label class="fl">Category</label>
+  <div class="chips" id="aCats"></div>
+  <label class="fl">Source URL <span class="hint">(documents the place)</span></label><input id="aUrl" placeholder="https://en.wikipedia.org/wiki/…" />
+  <button class="gbtn accent wide" id="submitPin"><i class="ph-bold ph-paper-plane-tilt"></i> Add pin</button>
+  <p class="add-note">It lands as <b>awaiting proof</b>. Anyone can then ask the validators to verify it.</p>
+</aside>
+
+<footer class="credit"><span class="net-dot"></span> studionet · <a id="contractLink" href="https://docs.genlayer.com/" target="_blank" rel="noopener">Atlas V2 contract</a></footer>
+
+<div id="log"></div>
+<script type="module" src="./app.js?v=1"></script>
+</body>
+</html>

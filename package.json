@@ -1,0 +1,11 @@
+{
+  "name": "atlas-verified-place-registry",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "npx http-server . -p 4801 -c-1",
+    "security:scan": "node scripts/security-check.mjs",
+    "check": "npm run security:scan"
+  }
+}
