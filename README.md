@@ -13,7 +13,7 @@ The interface is intentionally map-first. A user drops a pin, attaches a public 
 | Network | GenLayer Studionet |
 | Chain ID | `61999` |
 | Contract | `0x4F611050934677D94940c2998aF336EE9BEf9023` |
-| Contract Explorer | https://explorer-studio.genlayer.com/address/0x4F611050934677D94940c2998aF336EE9BEf9023 |
+| Contract Explorer | https://explorer-studio.genlayer.com/contracts/0x4F611050934677D94940c2998aF336EE9BEf9023 |
 | Deploy TX | `0x0cfdcda1779cace53323d26e69c7e80ae66ceede479d1447863f272544c39acd` |
 | Deployed | `2026-06-23T16:31:49.455Z` |
 
