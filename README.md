@@ -92,13 +92,13 @@ The deployed Studionet smoke run finalized the full protocol path:
 ## Project Structure
 
 ```text
-index.html              Static map shell
-styles.css              Cartographic UI and responsive panel styling
-app.js                  Studionet reads/writes and Leaflet interaction
-shared/genlayer-lite.js Browser-only GenLayer helper
-contracts/atlas_v2.py   Deployed GenLayer contract source
-deployment.json         Public deployment and smoke metadata
-vercel.json             Production security headers
+public/index.html              Static map shell served by Vercel
+public/styles.css              Cartographic UI and responsive panel styling
+public/app.js                  Studionet reads/writes and Leaflet interaction
+public/shared/genlayer-lite.js Browser-only GenLayer helper
+contracts/atlas_v2.py          Deployed GenLayer contract source for GitHub review
+deployment.json                Public deployment and smoke metadata for GitHub review
+vercel.json                    Production security headers
 ```
 
 ## Local Development
@@ -126,7 +126,7 @@ Recommended Vercel settings:
 | --- | --- |
 | Framework Preset | Other |
 | Build Command | None |
-| Output Directory | `.` |
+| Output Directory | `public` |
 | Environment Variables | None required |
 
 ## Security
