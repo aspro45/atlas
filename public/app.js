@@ -2,7 +2,7 @@ import { makeReader, write, connectWallet, activeAccount, balanceOf, short, fmtE
   from "./shared/genlayer-lite.js";
 
 const CONTRACT = "0x4F611050934677D94940c2998aF336EE9BEf9023";
-const EXPLORER = "https://explorer-studio.genlayer.com/address/" + CONTRACT;
+const EXPLORER = "https://explorer-studio.genlayer.com/address/0x4F611050934677D94940c2998aF336EE9BEf9023";
 const { read } = makeReader(CONTRACT);
 const STLABEL = ["Awaiting proof", "Verified", "Rejected"];
 const STKEY = ["pending", "verified", "rejected"];
@@ -140,7 +140,7 @@ async function load() {
 }
 
 const _cb = $("connectBtn"); if (_cb) _cb.onclick = doConnect;
-const _contractLink = $("contractLink"); if (_contractLink) _contractLink.href = EXPLORER;
+const _contractLink = $("contractLink"); if (_contractLink) _contractLink.href = "https://explorer-studio.genlayer.com/address/0x4F611050934677D94940c2998aF336EE9BEf9023";
 if (window.ethereum) window.ethereum.on?.("accountsChanged", refreshWallet);
 
 (async () => {
