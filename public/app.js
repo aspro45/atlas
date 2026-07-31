@@ -1,13 +1,23 @@
 import { makeReader, write, connectWallet, activeAccount, balanceOf, short, fmtErr }
   from "./shared/genlayer-lite.js";
+import { mountReviewDesk } from "./shared/review-desk.js";
 
-const CONTRACT = "0x4F611050934677D94940c2998aF336EE9BEf9023";
-const EXPLORER = "https://explorer-studio.genlayer.com/contracts/0x4F611050934677D94940c2998aF336EE9BEf9023";
+const CONTRACT = "0x8D03b61859572d56372c80b00F9e36Ec00f60dBc";
 const { read } = makeReader(CONTRACT);
 const STLABEL = ["Awaiting proof", "Verified", "Rejected"];
 const STKEY = ["pending", "verified", "rejected"];
 const CATS = ["landmark", "monument", "nature", "city", "mystery", "other"];
 const $ = (id) => document.getElementById(id);
+
+queueMicrotask(() => mountReviewDesk({
+  contract: CONTRACT, read, write, ensureWallet, fmtErr,
+  entity: "Place", idLabel: "Pin ID", countMethod: "get_place_count", recordMethod: "get_place_record",
+  openWindowMethod: "open_challenge_window", submitChallengeMethod: "submit_challenge", resolveChallengeMethod: "resolve_challenge_with_genlayer",
+  submitAppealMethod: "submit_appeal", resolveAppealMethod: "resolve_appeal_with_genlayer", finalMethod: "finalize_place", archiveMethod: "archive_place",
+  variant: "terminal", kicker: "Geographic evidence review", title: "Atlas verification station",
+  intro: "Open a mapped place beside its cited source, dispute a false location claim, and finalize the pin only after challenge and appeal are resolved.",
+  finalLabel: "Finalize place", archiveLabel: "Archive place",
+}));
 const esc = (s) => (s || "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const hostOf = (u) => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch (_) { return u; } };
 
@@ -96,8 +106,8 @@ $("addX").onclick = () => { $("addPanel").setAttribute("aria-hidden", "true"); s
 /* ---- actions ---- */
 async function doVerify(id) {
   if (!confirm("Verify this pin? Validators read the source and decide. Calls a real LLM.")) return;
-  const btn = $("verifyBtn"); if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> validators reading…'; }
-  try { await ensureWallet(); toast("Validators inspecting the source…", "", "verify"); await write(CONTRACT, "verify", [id]); toast("Settled on-chain.", "ok"); await load(); openPanel(id); }
+  const btn = $("verifyBtn"); if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> validators reading...'; }
+  try { await ensureWallet(); toast("Validators inspecting the source...", "", "verify"); await write(CONTRACT, "verify", [id]); toast("Settled on-chain.", "ok"); await load(); openPanel(id); }
   catch (e) { toast(fmtErr(e), "err"); if (btn) { btn.disabled = false; btn.textContent = "Verify with validators"; } }
 }
 async function submitPin() {
@@ -110,7 +120,7 @@ async function submitPin() {
   try {
     await ensureWallet();
     await write(CONTRACT, "add_place", [name, desc, pickCat, picked.lat.toFixed(6), picked.lng.toFixed(6), url]);
-    toast("Pin added — awaiting proof.", "ok");
+    toast("Pin added - awaiting proof.", "ok");
     $("aName").value = $("aDesc").value = $("aUrl").value = "";
     $("addPanel").setAttribute("aria-hidden", "true"); setDrop(false); picked = null;
     await load();
@@ -131,16 +141,14 @@ async function ensureWallet() { if (!account) account = await connectWallet(); a
 /* ---- load ---- */
 async function load() {
   const count = Number(await read("get_place_count"));
-  const out = [];
-  for (let i = 0; i < count; i++) out.push({ id: i, ...(await read("get_place", [i])) });
+  const out = await Promise.all(Array.from({ length: count }, (_, i) => read("get_place", [i]).then((record) => ({ id: i, ...record }))));
   places = out;
   const v = places.filter((p) => p.status === 1).length;
-  $("countLine").textContent = `— ${places.length} pins · ${v} verified`;
+  $("countLine").textContent = `- ${places.length} pins · ${v} verified`;
   drawMarkers();
 }
 
 const _cb = $("connectBtn"); if (_cb) _cb.onclick = doConnect;
-const _contractLink = $("contractLink"); if (_contractLink) _contractLink.href = "https://explorer-studio.genlayer.com/contracts/0x4F611050934677D94940c2998aF336EE9BEf9023";
 if (window.ethereum) window.ethereum.on?.("accountsChanged", refreshWallet);
 
 (async () => {

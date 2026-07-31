@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Atlas - Verified Place Registry</title>
-<meta name="description" content="Atlas is a GenLayer geospatial verification protocol. Drop a sourced place pin, run validator review, and keep a public audit trail for verified coordinates." />
+<title>Atlas - a map where every pin has to be true</title>
+<meta name="description" content="An AI-verified places registry on GenLayer. Drop a pin with a source; a validator set reads it and decides whether the place is real before it is confirmed on the map." />
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,8 +12,10 @@
 <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
 <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
 <link rel="stylesheet" href="./styles.css?v=1">
+<style>.audit-sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}</style>
 </head>
 <body>
+<h1 class="audit-sr-only">Atlas place intelligence</h1>
 
 <div id="map"></div>
 
@@ -21,7 +23,7 @@
 <header class="topbar">
   <div class="brand-panel">
     <span class="brand"><i class="ph-fill ph-globe-hemisphere-west"></i> Atlas</span>
-    <span class="brand-sub" id="countLine">— pins</span>
+    <span class="brand-sub" id="countLine">- pins</span>
   </div>
   <div class="controls">
     <span id="walletslot"><button class="gbtn" id="connectBtn"><i class="ph-bold ph-wallet"></i> Connect</button></span>
@@ -53,12 +55,12 @@
   <label class="fl">What is it?</label><textarea id="aDesc" placeholder="A short description the validators will check."></textarea>
   <label class="fl">Category</label>
   <div class="chips" id="aCats"></div>
-  <label class="fl">Source URL <span class="hint">(documents the place)</span></label><input id="aUrl" placeholder="https://en.wikipedia.org/wiki/…" />
+  <label class="fl">Source URL <span class="hint">(documents the place)</span></label><input id="aUrl" placeholder="https://en.wikipedia.org/wiki/..." />
   <button class="gbtn accent wide" id="submitPin"><i class="ph-bold ph-paper-plane-tilt"></i> Add pin</button>
   <p class="add-note">It lands as <b>awaiting proof</b>. Anyone can then ask the validators to verify it.</p>
 </aside>
 
-<footer class="credit"><span class="net-dot"></span> studionet · <a id="contractLink" href="https://explorer-studio.genlayer.com/contracts/0x4F611050934677D94940c2998aF336EE9BEf9023" target="_blank" rel="noopener">Contract 0x4F61...9023 -></a></footer>
+<footer class="credit"><span class="net-dot"></span> studionet · <a id="contractLink" href="https://explorer-bradbury.genlayer.com/address/0x8D03b61859572d56372c80b00F9e36Ec00f60dBc" target="_blank" rel="noopener">Contract 0x4F61...9023 -></a></footer>
 
 <div id="log"></div>
 <script type="module" src="./app.js?v=1"></script>

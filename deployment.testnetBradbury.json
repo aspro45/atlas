@@ -1,0 +1,15 @@
+{
+  "project": "23-atlas",
+  "name": "Atlas",
+  "network": "testnetBradbury",
+  "chainId": 4221,
+  "rpc": "https://rpc-bradbury.genlayer.com",
+  "explorer": "https://explorer-bradbury.genlayer.com",
+  "contractAddress": "0x8D03b61859572d56372c80b00F9e36Ec00f60dBc",
+  "deployTxHash": "0x47ac1bc4ce346f7068b8c89e6c75027031befa661ceca2f0b8a18f8584a65279",
+  "contractExplorer": "https://explorer-bradbury.genlayer.com/address/0x8D03b61859572d56372c80b00F9e36Ec00f60dBc",
+  "deployer": "0xf6d02F13D7BB5fC24aB6A3D662619641958A3Cf6",
+  "deployedAt": "2026-07-01T19:58:39.502Z",
+  "statusName": 5,
+  "smoke": {}
+}

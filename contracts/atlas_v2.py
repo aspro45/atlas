@@ -166,6 +166,7 @@ def _ruling_prompt(kind, place_public, current_verdict, current_summary, claim, 
         "riskFlags. Current verdict: " + current_verdict + ". Current summary: " +
         current_summary + ". Place: " + json.dumps(place_public, sort_keys=True) +
         ". Dispute claim: " + claim + ". Evidence:\n" + evidence_text
+        + "\nRequired revisedVerdict options: verified|rejected|uncertain."
     )
 
 
@@ -189,10 +190,12 @@ class Atlas(gl.Contract):
     idx_place_audits: TreeMap[str, str]
     recent_ids: DynArray[str]
     atlas_standard: str
+    admin: str
     clock: u256
 
     def __init__(self) -> None:
-        self.clock = 0
+        self.clock = u256(0)
+        self.admin = gl.message.sender_address.as_hex
         self.atlas_standard = "Verify real places using public sources, coordinate plausibility, and source credibility. Myths or fictional-only places should not be verified as real-world pins."
 
     def _ilist(self, tree: TreeMap[str, str], key: str) -> list:
@@ -255,8 +258,28 @@ class Atlas(gl.Contract):
                 "proofUrl": p["proofUrl"], "status": p["status"], "verdict": p["verdict"]}
 
     def _require_owner(self, p: dict, actor: str) -> None:
-        if str(p.get("submitter", "")).lower() != str(actor).lower():
-            raise Exception("only_submitter")
+        if str(actor).lower() != self.admin.lower() and str(p.get("submitter", "")).lower() != str(actor).lower():
+            raise Exception("record_operator_only")
+
+
+    def _require_admin(self) -> None:
+        if gl.message.sender_address.as_hex.lower() != self.admin.lower():
+            raise Exception("admin_only")
+
+    def _has_open_filings(self, record: dict) -> bool:
+        for challenge_id in record.get("challengeIds", []):
+            try:
+                if json.loads(self.challenges[int(challenge_id)]).get("status") == "open":
+                    return True
+            except Exception:
+                continue
+        for appeal_id in record.get("appealIds", []):
+            try:
+                if json.loads(self.appeals[int(appeal_id)]).get("status") == "open":
+                    return True
+            except Exception:
+                continue
+        return False
 
     def _require_mutable(self, p: dict) -> None:
         if p["status"] in ("FINALIZED", "ARCHIVED"):
@@ -360,7 +383,9 @@ class Atlas(gl.Contract):
 
     @gl.public.write
     def set_atlas_standard(self, standard: str) -> str:
-        self.clock += 1
+        if gl.message.sender_address.as_hex.lower() != self.admin.lower():
+            raise Exception("admin_only")
+        self.clock += u256(1)
         s = _s(standard, 1600)
         if s == "":
             raise Exception("empty_standard")
@@ -369,7 +394,7 @@ class Atlas(gl.Contract):
 
     @gl.public.write
     def create_place(self, name: str, description: str, category: str, lat: str, lng: str, proof_url: str) -> str:
-        self.clock += 1
+        self.clock += u256(1)
         actor = gl.message.sender_address.as_hex
         nm = _s(name, 160)
         desc = _s(description, 1200)
@@ -406,9 +431,10 @@ class Atlas(gl.Contract):
 
     @gl.public.write
     def add_source(self, place_id: str, url: str, source_type: str, note: str) -> str:
-        self.clock += 1
+        self.clock += u256(1)
         actor = gl.message.sender_address.as_hex
         p = self._load_place(place_id)
+        self._require_owner(p, actor)
         self._require_mutable(p)
         sid = self._add_source_internal(p, actor, url, source_type, note)
         self._add_audit(p, actor, "add_source", "Source " + sid + " added.", p["status"], p["status"])
@@ -417,9 +443,10 @@ class Atlas(gl.Contract):
 
     @gl.public.write
     def add_observation(self, place_id: str, observation: str, url: str) -> str:
-        self.clock += 1
+        self.clock += u256(1)
         actor = gl.message.sender_address.as_hex
         p = self._load_place(place_id)
+        self._require_owner(p, actor)
         self._require_mutable(p)
         text = _s(observation, 700)
         if text == "":
@@ -438,9 +465,10 @@ class Atlas(gl.Contract):
 
     @gl.public.write
     def open_review(self, place_id: str) -> str:
-        self.clock += 1
+        self.clock += u256(1)
         actor = gl.message.sender_address.as_hex
         p = self._load_place(place_id)
+        self._require_owner(p, actor)
         self._require_mutable(p)
         if p["status"] not in ("OPEN", "REVIEWED"):
             raise Exception("invalid_transition")
@@ -452,9 +480,10 @@ class Atlas(gl.Contract):
 
     @gl.public.write
     def review_place_with_genlayer(self, place_id: str) -> str:
-        self.clock += 1
+        self.clock += u256(1)
         actor = gl.message.sender_address.as_hex
         p = self._load_place(place_id)
+        self._require_owner(p, actor)
         self._require_mutable(p)
         if p["status"] not in ("OPEN", "UNDER_REVIEW", "REVIEWED"):
             raise Exception("invalid_transition")
@@ -514,8 +543,48 @@ class Atlas(gl.Contract):
         return self.review_place_with_genlayer(str(place_id))
 
     @gl.public.write
+    def record_review_fallback(self, place_id: str, verdict: str, confidence_bps: int, coordinate_match_bps: int, existence_bps: int, summary: str) -> str:
+        self.clock += u256(1)
+        self._require_admin()
+        actor = gl.message.sender_address.as_hex
+        p = self._load_place(place_id)
+        self._require_mutable(p)
+        res = _norm_review({
+            "verdict": verdict,
+            "confidenceBps": confidence_bps,
+            "coordinateMatchBps": coordinate_match_bps,
+            "existenceBps": existence_bps,
+            "summary": summary,
+            "rationale": "Admin-recorded emergency review with an explicit audit trail.",
+            "riskFlags": ["manual_admin_review"],
+            "sourceScores": []
+        }, p["sourceIds"])
+        rid = str(len(self.reviews))
+        self.reviews.append(json.dumps({"id": rid, "placeId": place_id, "reviewer": actor,
+                                        "verdict": res["verdict"], "confidenceBps": res["confidenceBps"],
+                                        "coordinateMatchBps": res["coordinateMatchBps"], "existenceBps": res["existenceBps"],
+                                        "summary": res["summary"], "rationale": res["rationale"],
+                                        "riskFlags": res["riskFlags"], "createdAt": str(int(self.clock))}))
+        p["reviewIds"].append(rid)
+        self._idx_add(self.idx_place_reviews, place_id, rid)
+        p["verdict"] = res["verdict"]
+        p["confidenceBps"] = int(res["confidenceBps"])
+        p["coordinateMatchBps"] = int(res["coordinateMatchBps"])
+        p["existenceBps"] = int(res["existenceBps"])
+        p["summary"] = res["summary"]
+        p["rationale"] = res["rationale"]
+        p["riskFlags"] = res["riskFlags"]
+        before = p["status"]
+        self._set_status(p, "REVIEWED")
+        if res["verdict"] == "verified":
+            self._rep_bump(p["submitter"], 30, "verifiedPlaces")
+        self._add_audit(p, actor, "record_review_fallback", res["summary"][:180], before, "REVIEWED")
+        self._store_place(p)
+        return res["verdict"]
+
+    @gl.public.write
     def open_challenge_window(self, place_id: str) -> str:
-        self.clock += 1
+        self.clock += u256(1)
         actor = gl.message.sender_address.as_hex
         p = self._load_place(place_id)
         self._require_owner(p, actor)
@@ -528,7 +597,7 @@ class Atlas(gl.Contract):
 
     @gl.public.write
     def submit_challenge(self, place_id: str, claim: str, evidence_url: str) -> str:
-        self.clock += 1
+        self.clock += u256(1)
         actor = gl.message.sender_address.as_hex
         p = self._load_place(place_id)
         if p["status"] != "CHALLENGE_WINDOW":
@@ -550,9 +619,10 @@ class Atlas(gl.Contract):
 
     @gl.public.write
     def resolve_challenge_with_genlayer(self, place_id: str, challenge_id: str) -> str:
-        self.clock += 1
+        self.clock += u256(1)
         actor = gl.message.sender_address.as_hex
         p = self._load_place(place_id)
+        self._require_owner(p, actor)
         if p["status"] != "CHALLENGE_WINDOW":
             raise Exception("invalid_transition")
         ch = self._load_challenge(challenge_id)
@@ -568,7 +638,9 @@ class Atlas(gl.Contract):
             except Exception:
                 txt = "[source unavailable]"
             raw = gl.nondet.exec_prompt(_ruling_prompt("challenge", self._place_public(p), p["verdict"], p["summary"], ch["claim"], txt), response_format="json")
-            return json.dumps(_norm_ruling(raw, ("accepted", "rejected", "partially_accepted", "inconclusive"), "inconclusive"), sort_keys=True)
+            normalized = _norm_ruling(raw, ("accepted", "rejected", "partially_accepted", "inconclusive"), "inconclusive")
+            normalized["revisedVerdict"] = _s(raw.get("revisedVerdict", raw.get("revisedOutcome", "")), 40).lower() if isinstance(raw, dict) else ""
+            return json.dumps(normalized, sort_keys=True)
 
         res = json.loads(gl.eq_principle.prompt_comparative(leader, "Equal if same ruling."))
         ch["status"] = res["ruling"]
@@ -578,6 +650,10 @@ class Atlas(gl.Contract):
         self.challenges[int(challenge_id)] = json.dumps(ch)
         p["confidenceBps"] = max(0, min(10000, int(p["confidenceBps"]) + int(res["confidenceDeltaBps"])))
         if res["ruling"] in ("accepted", "partially_accepted"):
+            revised = str(res.get("revisedVerdict", "")).lower()
+            if revised not in ("verified", "rejected", "uncertain",):
+                revised = p["verdict"]
+            p["verdict"] = revised
             self._rep_bump(ch["challenger"], 50, "successfulChallenges")
         elif res["ruling"] == "rejected":
             self._rep_bump(ch["challenger"], -30, "failedChallenges")
@@ -586,10 +662,33 @@ class Atlas(gl.Contract):
         return res["ruling"]
 
     @gl.public.write
-    def submit_appeal(self, place_id: str, reason: str, evidence_url: str) -> str:
-        self.clock += 1
+    def record_challenge_ruling(self, place_id: str, challenge_id: str, ruling_text: str, reason: str) -> str:
+        self.clock += u256(1)
+        self._require_admin()
         actor = gl.message.sender_address.as_hex
         p = self._load_place(place_id)
+        ch = self._load_challenge(challenge_id)
+        if ch["placeId"] != place_id:
+            raise Exception("challenge_place_mismatch")
+        r = _s(ruling_text, 40).lower()
+        if r not in ("accepted", "rejected", "partially_accepted", "inconclusive"):
+            r = "rejected"
+        ch["status"] = r
+        ch["ruling"] = _s(reason, 500)
+        ch["confidenceDeltaBps"] = 0
+        ch["riskFlags"] = ["manual_admin_ruling"]
+        self.challenges[int(challenge_id)] = json.dumps(ch)
+        self._add_audit(p, actor, "record_challenge_ruling", ch["ruling"][:180], p["status"], p["status"])
+        self._store_place(p)
+        return r
+
+    @gl.public.write
+    def submit_appeal(self, place_id: str, reason: str, evidence_url: str) -> str:
+        self.clock += u256(1)
+        actor = gl.message.sender_address.as_hex
+        p = self._load_place(place_id)
+        if self._has_open_filings(p):
+            raise Exception("open_filing_blocks_appeal")
         if p["status"] not in ("CHALLENGE_WINDOW", "APPEALED"):
             raise Exception("invalid_transition")
         r = _s(reason, 700)
@@ -611,9 +710,10 @@ class Atlas(gl.Contract):
 
     @gl.public.write
     def resolve_appeal_with_genlayer(self, place_id: str, appeal_id: str) -> str:
-        self.clock += 1
+        self.clock += u256(1)
         actor = gl.message.sender_address.as_hex
         p = self._load_place(place_id)
+        self._require_owner(p, actor)
         if p["status"] != "APPEALED":
             raise Exception("invalid_transition")
         ap = self._load_appeal(appeal_id)
@@ -629,7 +729,9 @@ class Atlas(gl.Contract):
             except Exception:
                 txt = "[source unavailable]"
             raw = gl.nondet.exec_prompt(_ruling_prompt("appeal", self._place_public(p), p["verdict"], p["summary"], ap["reason"], txt), response_format="json")
-            return json.dumps(_norm_ruling(raw, ("granted", "denied", "partially_granted", "inconclusive"), "inconclusive"), sort_keys=True)
+            normalized = _norm_ruling(raw, ("granted", "denied", "partially_granted", "inconclusive"), "inconclusive")
+            normalized["revisedVerdict"] = _s(raw.get("revisedVerdict", raw.get("revisedOutcome", "")), 40).lower() if isinstance(raw, dict) else ""
+            return json.dumps(normalized, sort_keys=True)
 
         res = json.loads(gl.eq_principle.prompt_comparative(leader, "Equal if same ruling."))
         ap["status"] = res["ruling"]
@@ -639,6 +741,10 @@ class Atlas(gl.Contract):
         self.appeals[int(appeal_id)] = json.dumps(ap)
         p["confidenceBps"] = max(0, min(10000, int(p["confidenceBps"]) + int(res["confidenceDeltaBps"])))
         if res["ruling"] in ("granted", "partially_granted"):
+            revised = str(res.get("revisedVerdict", "")).lower()
+            if revised not in ("verified", "rejected", "uncertain",):
+                revised = p["verdict"]
+            p["verdict"] = revised
             self._rep_bump(ap["appellant"], 45, "appealsGranted")
         before = p["status"]
         self._set_status(p, "CHALLENGE_WINDOW")
@@ -647,11 +753,36 @@ class Atlas(gl.Contract):
         return res["ruling"]
 
     @gl.public.write
+    def record_appeal_ruling(self, place_id: str, appeal_id: str, ruling_text: str, reason: str) -> str:
+        self.clock += u256(1)
+        self._require_admin()
+        actor = gl.message.sender_address.as_hex
+        p = self._load_place(place_id)
+        ap = self._load_appeal(appeal_id)
+        if ap["placeId"] != place_id:
+            raise Exception("appeal_place_mismatch")
+        r = _s(ruling_text, 40).lower()
+        if r not in ("granted", "denied", "partially_granted", "inconclusive"):
+            r = "denied"
+        ap["status"] = r
+        ap["ruling"] = _s(reason, 500)
+        ap["confidenceDeltaBps"] = 0
+        ap["riskFlags"] = ["manual_admin_ruling"]
+        self.appeals[int(appeal_id)] = json.dumps(ap)
+        before = p["status"]
+        self._set_status(p, "CHALLENGE_WINDOW")
+        self._add_audit(p, actor, "record_appeal_ruling", ap["ruling"][:180], before, "CHALLENGE_WINDOW")
+        self._store_place(p)
+        return r
+
+    @gl.public.write
     def finalize_place(self, place_id: str) -> str:
-        self.clock += 1
+        self.clock += u256(1)
         actor = gl.message.sender_address.as_hex
         p = self._load_place(place_id)
         self._require_owner(p, actor)
+        if self._has_open_filings(p):
+            raise Exception("open_filing_blocks_finalize")
         if p["status"] not in ("REVIEWED", "CHALLENGE_WINDOW"):
             raise Exception("invalid_transition")
         before = p["status"]
@@ -662,7 +793,7 @@ class Atlas(gl.Contract):
 
     @gl.public.write
     def archive_place(self, place_id: str) -> str:
-        self.clock += 1
+        self.clock += u256(1)
         actor = gl.message.sender_address.as_hex
         p = self._load_place(place_id)
         self._require_owner(p, actor)
@@ -675,7 +806,7 @@ class Atlas(gl.Contract):
 
     @gl.public.write
     def recalculate_reputation(self, address_text: str) -> str:
-        self.clock += 1
+        self.clock += u256(1)
         addr = _s(address_text, 64)
         if addr == "":
             raise Exception("empty_address")

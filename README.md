@@ -8,17 +8,17 @@ Atlas stores place submissions with sources, observations and review status. It 
 
 - App: https://atlas-github-ten.vercel.app
 - GitHub: https://github.com/aspro45/atlas
-- Contract explorer: https://explorer-studio.genlayer.com/contracts/0x4F611050934677D94940c2998aF336EE9BEf9023
+- Contract explorer: https://explorer-bradbury.genlayer.com/address/0x8D03b61859572d56372c80b00F9e36Ec00f60dBc
 
 ## Deployment Card
 
 | Field | Value |
 | --- | --- |
-| Network | GenLayer Studionet |
-| Chain ID | 61999 |
-| Contract | `0x4F611050934677D94940c2998aF336EE9BEf9023` |
-| Deploy transaction | [`0x0cfdcda1...c39acd`](https://explorer-studio.genlayer.com/tx/0x0cfdcda1779cace53323d26e69c7e80ae66ceede479d1447863f272544c39acd) |
-| Deployed | 2026-06-23T16:31:49.455Z |
+| Network | GenLayer Bradbury |
+| Chain ID | 4221 |
+| Contract | `0x8D03b61859572d56372c80b00F9e36Ec00f60dBc` |
+| Deploy transaction | [`0x0cfdcda1...c39acd`](https://explorer-bradbury.genlayer.com/tx/0x47ac1bc4ce346f7068b8c89e6c75027031befa661ceca2f0b8a18f8584a65279) |
+| Deployed | 2026-07-01T19:58:39.502Z |
 | Contract file | `contracts/atlas_v2.py` |
 | Source size | 38,006 bytes |
 
@@ -38,12 +38,12 @@ The frontend can read counts, recent places, category views, submitter views, so
 
 | Method | Transaction |
 | --- | --- |
-| `set_atlas_standard` | [0xe885c0b3...8e05a4](https://explorer-studio.genlayer.com/tx/0xe885c0b3a7f084ceda35bb7935339fd8bed61dec3eb4297fd625a9369c8e05a4) |
-| `create_place` | [0x22b557eb...39186b](https://explorer-studio.genlayer.com/tx/0x22b557eba74cfda4d3dd0a2fbae1de6465c46942aa650ddcd545e8237539186b) |
-| `add_source_wiki` | [0x09ed0658...f566ba](https://explorer-studio.genlayer.com/tx/0x09ed0658cbb3e8b4a1654755c87c99c10e6be3411d1cbc48c2c97a89d0f566ba) |
-| `add_source_britannica` | [0xa552ba69...bcada1](https://explorer-studio.genlayer.com/tx/0xa552ba694901b12862fdeb279e4fd7f44d8b2238c7e0acb27fbb05f368bcada1) |
-| `add_observation` | [0x2fa41f61...ef9ad7](https://explorer-studio.genlayer.com/tx/0x2fa41f61936722ba4e5619240cf1a8a27ad5b9e4665a5bd4bbf8d20d03ef9ad7) |
-| `open_review` | [0xea04568c...688550](https://explorer-studio.genlayer.com/tx/0xea04568c6894737ef1ec31c1cd2200a344f415e89a50df68bde874684d688550) |
+| `set_atlas_standard` | [0x131be062...70a0e4](https://explorer-bradbury.genlayer.com/tx/0x131be0620c66f218befb65c032fd65ca38b7d617c145140fb427889eb470a0e4) |
+| `create_place` | [0x3b189b39...bc844d](https://explorer-bradbury.genlayer.com/tx/0x3b189b39322c0e57f81e2480e106b19efaa9a990a904b9a33ee60724dbbc844d) |
+| `add_source_wiki` | [0xd290a568...668805](https://explorer-bradbury.genlayer.com/tx/0xd290a568fbdb274fc1e7f459b6b8c14052f14265edbbba4ac5ceaf1df7668805) |
+| `add_source_britannica` | [0xd5ae6a76...c88b11](https://explorer-bradbury.genlayer.com/tx/0xd5ae6a76113461a4aa45a598a60e5f9c38fa7e62c70fd5925bcad5ca88c88b11) |
+| `add_observation` | [0x9889de60...94d586](https://explorer-bradbury.genlayer.com/tx/0x9889de6083865a0480ef6ef539c05d35c0c0c7cf4ebbb783ef8b1d1e3194d586) |
+| `open_review` | [0x78155da0...986130](https://explorer-bradbury.genlayer.com/tx/0x78155da0dd653de87759a929c0c68f16fa92fe145b980967e085ccb283986130) |
 
 ## Running The App
 
