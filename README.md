@@ -6,7 +6,7 @@ Atlas stores place submissions with sources, observations and review status. It 
 
 ## Public Surfaces
 
-- App: https://atlas-github-ten.vercel.app
+- App: https://tanawo3-atlas.vercel.app
 - GitHub: https://github.com/aspro45/atlas
 - Contract explorer: https://explorer-bradbury.genlayer.com/address/0x8D03b61859572d56372c80b00F9e36Ec00f60dBc
 
